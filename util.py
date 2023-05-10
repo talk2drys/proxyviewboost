@@ -59,7 +59,8 @@ async def run_sock(proxy: SSHSock5Proxy):
         case Err(_):
             pass
 
-    human = VirtualHuman(youtube_url="https://www.youtube.com/watch?v=agy_bokLzO4")
+    # human = VirtualHuman(youtube_url="https://www.youtube.com/watch?v=agy_bokLzO4")
+    human = VirtualHuman(youtube_url="https://www.youtube.com/watch?v=4DmN8tGNlGU")
     socks5_url = client.__str__()
     await human.run(socks5_url)
 

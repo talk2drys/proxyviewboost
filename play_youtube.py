@@ -1,7 +1,5 @@
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
 import asyncio
+from arsenic import get_session, keys, browsers, services
 
 
 class VirtualHuman:
@@ -11,26 +9,28 @@ class VirtualHuman:
         self._url = youtube_url
 
     async def run(self, proxy: str):
-        options = webdriver.ChromeOptions()
-        options.add_argument('--proxy-server=' + proxy)
-        driver = webdriver.Chrome(options=options)
+        # options = webdriver.ChromeOptions()
+        # options.add_argument('--proxy-server=' + proxy)
+        # driver = webdriver.Chrome(options=options)
 
-        await asyncio.sleep(1)  # wait for video to load
-        try:
-            driver.get(self._url)
-        except Exception:
-            pass
+        service = services.Chromedriver()
+        args = [f"--proxy-server={proxy}"]
+        kwargs = {'goog:chromeOptions': dict(args=args)}
+        browser = browsers.Chrome(**kwargs)
+        async with get_session(service, browser) as session:
+            await asyncio.sleep(1)  # wait for video to load
+            await session.get(self._url, timeout=10)
+            await asyncio.sleep(5)
+            # get video element
+            video_player = await session.wait_for_element(5, "#movie_player")
+            video_player.click()
+            await asyncio.sleep(0.5)
+            # check if the video is playing
+            playing = await session.execute_script("return document.getElementById('movie_player').getPlayerState() == 1")
+            if not playing:
+                await video_player.send_keys(keys=keys.SPACE)
+                is_now_playing = await session.execute_script("return document.getElementById('movie_player').getPlayerState() == 1")
+                print(f"Video is playing: {is_now_playing}")
 
-        await asyncio.sleep(30)
-        # get vide element
-        video = driver.find_element(By.ID, "movie_player")
-
-        # check if the video is playing
-        playing = await driver.execute_script(
-            "return document.getElementById('movie_player').getPlayerState() == 1")
-        if not playing:
-            video.send_keys(Keys.SPACE)
-
-        # let video play for 30 second before closing
-        await asyncio.sleep(30)
-        driver.close()
+            # let video play for 30 second before closing
+            await asyncio.sleep(30)
