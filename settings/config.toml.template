@@ -1,2 +1,3 @@
 timeout = 10              # default timeout for socket creation
 number_of_parallel = 5    # number of parallel instances to run
+youtube_video = ""        # youtube url to watch

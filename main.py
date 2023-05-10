@@ -9,19 +9,16 @@ import toml
 from result import Result, Ok, Err
 from typing import Any, List
 
-
-TIMEOUT_IN_SECONDS = 10
-
 if __name__ == "__main__":
     # load configuration file
     config: dict[str, Any] = toml.load("settings/config.toml")
 
-    TIMEOUT: int = config['timeout']
+    TIMEOUT_IN_SECS: int = config['timeout']
     NUMBER_OF_PARALLEL: int = config['number_of_parallel']
 
     print("STARTING IROBOT!!!")
     print("Loading sock server file")
-    loaded_sock_servers: Result[List[SSHSock5Proxy], Error] = load_sock_servers("proxies")
+    loaded_sock_servers: Result[List[SSHSock5Proxy], Error] = load_sock_servers("settings/servers.txt")
 
     match loaded_sock_servers:
         case Ok(value):
@@ -33,6 +30,6 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     for i in range(0, len(sock_servers), 5):
         loop.run_until_complete(run_socks(sock_servers[i:i+NUMBER_OF_PARALLEL]))
-        print(f"Completed {i+5} proxies")
+        print(f"Completed {i+NUMBER_OF_PARALLEL} proxies")
 
     print("Exiting")
