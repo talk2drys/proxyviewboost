@@ -1,0 +1,5 @@
+.idea/
+__pycache__/
+.python-version
+settings/config.toml
+settings/servers.txt
