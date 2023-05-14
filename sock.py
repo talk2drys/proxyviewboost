@@ -1,9 +1,11 @@
 import subprocess
 import asyncio
 import socket
-from error import  Error
+from error import Error
 from result import Result, Ok, Err
 import socket
+import asyncssh
+from asyncssh import SSHListener, SSHClientConnection
 
 
 def _get_free_port() -> Result[int, Error]:
@@ -28,7 +30,6 @@ class SSHSock5Proxy:
             case Error(_):
                 self._binding_port = None
 
-
     def __str__(self) -> str:
         schema = "socks5"
         return f"{schema}://localhost:{self._binding_port}"
@@ -48,15 +49,17 @@ class SSHSock5Proxy:
     def get_password(self) -> str:
         return self._password
 
-    async def create_ssh_sock(self) -> Result[int, Error]:
+    async def create_ssh_sock(self) -> Result[SSHListener, Error]:
         if self._binding_port is None:
             return Err(Error.SocketError)
-
-        # Start the SSH -D command on a local port
-        command = f"sshpass -p {self._password} ssh -D {self._binding_port} -N -f -C -q {self._username}@{self._host}"
-
-        await asyncio.create_subprocess_shell(command,stdin=None, stdout=None, stderr=subprocess.DEVNULL, shell=True)
-
-        # Start the SSH command with stdin set to PIPE
-        # ssh_process = subprocess.Popen(command, stdin=None, stdout=None, stderr=subprocess.DEVNULL, shell=True)
-        return Ok(self._binding_port)
+        try:
+            conn: SSHClientConnection = await asyncssh.connect(self._host, port=self._port, username=self._username,
+                                                               password=self._password)
+            try:
+                sock_listener: SSHListener = await conn.forward_socks(listen_host="127.0.0.1", listen_port=0)
+                return Ok(sock_listener)
+            except OSError:
+                return Err(Error.OtherError)
+        except Exception as e:
+            print(f"Error: {str(e)}")
+            Err(Error.OtherError)
