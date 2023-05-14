@@ -11,4 +11,5 @@ class Error(Enum):
     NoSuchProcess = "No Such Process"
     AccessDenied = "Access Denied"
     ZombieProcess = "Zombie Process"
+    OtherError = "Other Error Occured" #TODO: update to something meaningful
 
