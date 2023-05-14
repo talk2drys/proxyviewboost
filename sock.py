@@ -53,8 +53,9 @@ class SSHSock5Proxy:
         if self._binding_port is None:
             return Err(Error.SocketError)
         try:
+            # TODO: add host key policy
             conn: SSHClientConnection = await asyncssh.connect(self._host, port=self._port, username=self._username,
-                                                               password=self._password)
+                                                               password=self._password, known_hosts=None)
             try:
                 sock_listener: SSHListener = await conn.forward_socks(listen_host="127.0.0.1", listen_port=0)
                 return Ok(sock_listener)
