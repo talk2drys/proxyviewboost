@@ -7,7 +7,7 @@ from typing import Tuple
 import structlog
 
 from logger import set_logger
-from app_config import YOUTUBE_LINK, PERCENTAGE_TO_WATCH
+from app_config import YOUTUBE_LINK, PERCENTAGE_TO_WATCH, CHROME_DRIVER
 
 logger = set_logger()
 
@@ -50,7 +50,7 @@ class VirtualHuman:
         });
         """
 
-        service = services.Chromedriver()
+        service = services.Chromedriver(binary=CHROME_DRIVER)
         args = [f"--proxy-server={self.proxy}"]
         kwargs = {'goog:chromeOptions': dict(args=args)}
         browser = browsers.Chrome(**kwargs)

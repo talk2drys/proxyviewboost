@@ -1,3 +1,13 @@
-timeout = 10              # default timeout for socket creation
-number_of_parallel = 5    # number of parallel instances to run
-youtube_video = ""        # youtube url to watch
+timeout = 10              # default timeout for socks creation
+number_of_parallel = 1    # number of parallel instances to run
+
+# youtube url to watch
+youtube_video = ""
+
+# enter value from 0 to 1, if video is less than 60 seconds
+# long, the full length will be played
+percentage_to_watch = 0.5
+
+# absolute path to chrome driver compatible with the install
+# chrome version
+chrome_driver = "/home/blackdante/bin/chromedriver"
