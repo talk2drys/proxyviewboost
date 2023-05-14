@@ -9,6 +9,7 @@ import asyncio
 import psutil
 from error import Error
 import logging
+from asyncssh import SSHListener
 
 def load_sock_servers(path: str) -> Result[List[SSHSock5Proxy], Error]:
     current_line: int = 0
@@ -54,24 +55,14 @@ def kill_process_on_port(port: int) -> Result[None, Error]:
 async def run_sock(proxy: SSHSock5Proxy):
     client = proxy
     match await client.create_ssh_sock():
-        case Ok(_):
-            pass
-        case Err(_):
-            pass
-
-    # human = VirtualHuman(youtube_url="https://www.youtube.com/watch?v=agy_bokLzO4")
-    human = VirtualHuman(youtube_url="https://www.youtube.com/watch?v=X7SiuQxhAjg")
-    socks5_url = client.__str__()
-    await human.run(socks5_url)
-
-    bind_port = client.get_binding_port()
-    if bind_port is None:
-        print(proxy.get_host_and_port())
-        return
-
-    print("killing ssh process")
-    if kill_process_on_port(bind_port).is_err():
-        logging.error(f"error killing socket with port {client.get_binding_port}")
+        case Ok(sock_listener):
+            proxy_url = f"socks5://localhost:{sock_listener.get_port()}"
+            human = VirtualHuman(youtube_url="https://www.youtube.com/watch?v=X7SiuQxhAjg", proxy=proxy_url)
+            await human.run()
+            sock_listener.close()
+            print("sock closed")
+        case Err(err):
+            sys.exit(5)
 
 
 async def run_socks(proxies):
