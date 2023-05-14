@@ -5,6 +5,7 @@ aiosignal==1.3.1
 arsenic==21.8
 async-generator==1.10
 async-timeout==4.0.2
+asyncssh==2.13.1
 attrs==23.1.0
 bcrypt==4.0.1
 certifi==2022.12.7
@@ -31,6 +32,7 @@ structlog==20.2.0
 toml==0.10.2
 trio==0.22.0
 trio-websocket==0.10.2
+typing_extensions==4.5.0
 urllib3==1.26.15
 wsproto==1.2.0
 yarl==1.9.2
