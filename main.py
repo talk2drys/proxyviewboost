@@ -7,14 +7,10 @@ import toml
 from result import Result, Ok, Err
 from typing import Any, List
 from logger import  set_logger
+from app_config import NUMBER_OF_PARALLEL
 
 if __name__ == "__main__":
     logger = set_logger()
-    # load configuration file
-    config: dict[str, Any] = toml.load("settings/config.toml")
-
-    TIMEOUT_IN_SECS: int = config['timeout']
-    NUMBER_OF_PARALLEL: int = config['number_of_parallel']
 
     logger.info("STARTING IROBOT!!!")
     logger.info("Loading sock server file")
@@ -29,7 +25,7 @@ if __name__ == "__main__":
             sys.exit(2)
 
     loop = asyncio.get_event_loop()
-    for i in range(0, len(sock_servers), 5):
+    for i in range(0, len(sock_servers), NUMBER_OF_PARALLEL):
         loop.run_until_complete(run_socks(sock_servers[i:i + NUMBER_OF_PARALLEL]))
         logger.info(f"Completed {i + NUMBER_OF_PARALLEL} proxies")
 

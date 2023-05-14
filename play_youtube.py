@@ -7,6 +7,7 @@ from typing import Tuple
 import structlog
 
 from logger import set_logger
+from app_config import YOUTUBE_LINK, PERCENTAGE_TO_WATCH
 
 logger = set_logger()
 
@@ -53,34 +54,43 @@ class VirtualHuman:
         args = [f"--proxy-server={self.proxy}"]
         kwargs = {'goog:chromeOptions': dict(args=args)}
         browser = browsers.Chrome(**kwargs)
-        async with get_session(service, browser) as session:
-            await asyncio.sleep(1)  # wait for video to load
-            try:
-                await session.get(self._url, timeout=60)
-                await session.execute_script(add_playing_script)
-            except asyncio.TimeoutError as err:
-                logger.error("Failed loading page")
-                await session.close()
-                return
-
-            while True:
-                video_player = await session.wait_for_element(60, "#movie_player")
-                # await video_player.click()
-                await asyncio.sleep(0.5)
-                # check if the video is playing
-                playing = await session.execute_script(
-                    "return element = document.querySelectorAll('video.html5-main-video')[0].playing;")
-                if not playing:
-                    await video_player.send_keys(keys=keys.SPACE)
-
-                is_ad_playing = await self.check_for_ad(session)
-                if is_ad_playing:
-                    await asyncio.sleep(5)
-                    if await self.check_for_ad(session):
-                        skip_ad_button = await session.wait_for_element(30, '.ytp-ad-skip-button')
-                        await VirtualHuman._skip_ad(skip_ad_button)
-
-                (current_playtime, total_playtime) = await self.get_current_timestamp(session)
-                logger.info(f"current_playtime={current_playtime} total_playtime={total_playtime}")
-                if current_playtime == total_playtime or current_playtime > total_playtime - 10:
+        try:
+            async with get_session(service, browser) as session:
+                await asyncio.sleep(1)  # wait for video to load
+                try:
+                    await session.get(YOUTUBE_LINK, timeout=60)
+                    await session.execute_script(add_playing_script)
+                except asyncio.TimeoutError as err:
+                    logger.error("Failed loading page")
+                    await session.close()
                     return
+
+                pl = await self.get_current_timestamp(session)
+                if pl[1] < 60:
+                    allowed_play_time = pl[1]
+                else:
+                    allowed_play_time = float(PERCENTAGE_TO_WATCH) * pl[1]
+
+                while True:
+                    video_player = await session.wait_for_element(60, "#movie_player")
+                    # await video_player.click()
+                    await asyncio.sleep(0.5)
+                    # check if the video is playing
+                    playing = await session.execute_script(
+                        "return element = document.querySelectorAll('video.html5-main-video')[0].playing;")
+                    if not playing:
+                        await video_player.send_keys(keys=keys.SPACE)
+
+                    is_ad_playing = await self.check_for_ad(session)
+                    if is_ad_playing:
+                        await asyncio.sleep(5)
+                        if await self.check_for_ad(session):
+                            skip_ad_button = await session.wait_for_element(30, '.ytp-ad-skip-button')
+                            await VirtualHuman._skip_ad(skip_ad_button)
+
+                    (current_playtime, total_playtime) = await self.get_current_timestamp(session)
+                    logger.info(f"current_playtime={current_playtime} total_playtime={total_playtime}")
+                    if current_playtime >= allowed_play_time or current_playtime > pl[1] - 10:
+                        return
+        except Exception:
+            logger.error("exception occurred")
